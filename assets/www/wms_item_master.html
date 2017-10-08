@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+    /*********************************************************
+    /*  Project Name ;  CKS Dream WMS 1.0
+    /*  Description : CKS 창고/매장 재고관리
+    /*  Program History
+    /*  2016-03-17    ksoocho    Creation
+    /*********************************************************
+    -->
+    <meta charset="utf-8" />
+    <title>CKS Dream WMS</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+
+    <link rel="stylesheet" type="text/css" href="./js/jquery.mobile-1.4.5.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+
+    <script type="text/javascript" src="./js/jquery-2.2.1.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.mobile-1.4.5.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.session.js"></script>
+    <script type="text/javascript" src="./js/wms_common.js"></script>
+    <script type="text/javascript" src="./js/wms_item_common.js"></script>
+    <script type="text/javascript" src="./js/wms_item_master.js"></script>
+
+</head>
+<body>
+
+<script type="text/javascript">
+
+ $(document).bind("mobileinit", function() {
+	 $.mobile.autoInitializePage = false;
+     $.mobile.defaultPageTransition = 'flip';
+     $.mobile.loadingMessage = 'Loading...';
+     $.mobile.page.prototype.options.addBackBtn = true;
+ });
+
+$(document).on('pageinit','#pageWMSItemMaster', function() {
+
+    // 대분류
+    var v_sel_object = $("#selectItemGroup1");
+    var v_msg_object = $("#msgItemMaster");
+
+    setItemGroupList(v_sel_object, 'L', ' ', v_msg_object);
+
+});
+
+$(document).ready(function() {
+
+    //------------------------------------------------------------
+    //  Item Group 대분류 Confirm
+	//------------------------------------------------------------
+	$("#btnItemGroup1").click(function(){
+
+        var v_group_code = $("#selectItemGroup1 option:selected").val();
+
+        if (v_group_code != null && v_group_code != 'choose-one')
+        {
+            var v_sel_object = $("#selectItemGroup2");
+            var v_msg_object = $("#msgItemMaster");
+            setItemGroupList(v_sel_object, 'M', v_group_code, v_msg_object);
+        } else  {
+            v_msg_object.html("<span style='color:#cc0000'>Error: 대분류 확인</span>");
+        }
+    });
+
+    //------------------------------------------------------------
+    //  Item Group 중분류 Confirm
+	//------------------------------------------------------------
+	$("#btnItemGroup2").click(function(){
+
+        var v_group_code = $("#selectItemGroup2 option:selected").val();
+        var v_sel_object = $("#selectItemGroup3");
+        var v_msg_object = $("#msgItemMaster");
+
+        if (v_group_code != null && v_group_code != 'choose-one')
+        {
+            setItemGroupList(v_sel_object, 'S', v_group_code, v_msg_object);
+        } else  {
+            v_msg_object.html("<span style='color:#cc0000'>Error: 중분류 확인</span>");
+        }
+    });
+
+    //------------------------------------------------------------
+    //  Item Group 소분류 Confirm
+	//------------------------------------------------------------
+	$("#btnItemGroup3").click(function(){
+
+        var v_item_group1 = $("#selectItemGroup1 option:selected").val() ;
+        var v_item_group2 = $("#selectItemGroup2 option:selected").val() ;
+        var v_item_group3 = $("#selectItemGroup3 option:selected").val() ;
+
+        if ((v_item_group1 != null && v_item_group1 != 'choose-one')
+             && (v_item_group2 != null && v_item_group2 != 'choose-one')
+             && (v_item_group3 != null && v_item_group3 != 'choose-one'))
+        {
+            setItemGroupIDList(v_item_group1, v_item_group2, v_item_group3);
+        } else {
+            $("#msgItemMaster").html("<span style='color:#cc0000'>Error: 소분류 확인</span>");
+        }
+
+    });
+
+    //------------------------------------------------------------
+    //  Item Group ID 확인
+	//------------------------------------------------------------
+	$("#btnItemGroupID").click(function(){
+
+        // Item Type
+        var v_sel_object = $("#selectItemType");
+        var v_msg_object = $("#msgItemMaster");
+        setLookupList(v_sel_object, 'ITEM_TYPE', v_msg_object);
+
+       // Serial Flag
+        var v_sel_object = $("#selectSerialFlag");
+        var v_msg_object = $("#msgItemMaster");
+        setLookupList(v_sel_object, 'YESNO_FLAG', v_msg_object);
+
+    });
+
+    //------------------------------------------------------------
+    //  Item Group Save Button
+	//------------------------------------------------------------
+	$("#btnItemMasterSave").click(function(){
+        var v_check_code = "N";
+
+        var answer = confirm('품목정보를 저장하시겠습니까?');
+
+        if (answer)  {
+          v_check_code = "Y";
+        } else  {
+          v_check_code = "N";
+        }
+
+        if ( v_check_code == "Y")
+        {
+            var v_item_group_id = $("#selectItemGroupID option:selected").val() ;
+            var v_item_descr    = $("#itemMasterDescr").val();
+            var v_item_spec     = $("#itemMasterSpec").val();
+            var v_item_type     = $("#selectItemType option:selected").val() ;
+            var v_serial_flag   = $("#selectSerialFlag option:selected").val() ;
+
+            if ((v_item_group_id != null && v_item_group_id != 'choose-one')
+                 && (v_item_type != null && v_item_type != 'choose-one')
+                 && (v_serial_flag != null && v_serial_flag != 'choose-one')
+                 && (v_item_descr != null)
+                 && (v_item_spec != null))
+            {
+                saveItemMaster( v_item_group_id, v_item_descr, v_item_spec, v_item_type, v_serial_flag );
+            } else {
+                $("#msgItemMaster").html("<span style='color:#cc0000'>Error: 품목정보</span>");
+            }
+        }
+    });
+
+    //------------------------------------------------------------
+    //  Clear Button
+	//------------------------------------------------------------
+	$("#btnItemMasterClear").click(function(){
+
+        $("#selectItemGroupID option:selected").val('choose-one') ;
+        $("#itemMasterDescr").val("");
+        $("#itemMasterSpec").val("");
+        $("#selectItemType option:selected").val('choose-one') ;
+        $("#selectSerialFlag option:selected").val('choose-one') ;
+
+    });
+
+});
+
+</script>
+
+<!-- ************************************** -->
+<!--Word Main Page                          -->
+<!-- ************************************** -->
+<div data-role="page" id="pageWMSItemMaster">
+
+    <div data-role="header" >
+        <h1>CKS Dream WMS </h1>
+    </div><!-- /header -->
+
+    <div role="main" class="ui-content">
+
+        <h2>품목정보 등록</h2>
+
+        <!-- Item Group 대분류 목록 보여주기 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>대분류</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectItemGroup1" name="selectItemGroup1"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnItemGroup1" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item Group 중분류 목록 보여주기 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>중분류</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectItemGroup2" name="selectItemGroup2"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnItemGroup2" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item Group 소분류 목록 보여주기 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>소분류</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectItemGroup3" name="selectItemGroup3"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnItemGroup3" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item Group 목록 보여주기 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>품목그룹</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectItemGroupID" name="selectItemGroupID"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnItemGroupID" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item Master Description 입력필드 -->
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:20%">	<h3>품목설명</h3> </div>
+            <div class="ui-block-b" style="width:80%">	<input type="text" name="itemMasterDescr" id="itemMasterDescr" value=""  /> </div>
+        </section>
+
+        <!-- Item Master Spec 입력필드 -->
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:20%">	<h3>품목규격</h3> </div>
+            <div class="ui-block-b" style="width:80%">	<input type="text" name="itemMasterSpec" id="itemMasterSpec" value=""  /> </div>
+        </section>
+
+        <!-- Item Type / Serial Flag 목록 보여주기 -->
+        <section class="ui-grid-c ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>품목Type</h3></div>
+            <div class="ui-block-b" style="width:30%">
+                <select id="selectItemType" name="selectItemType"> </select>
+            </div>
+            <div class="ui-block-c" style="width:25%"><h3>Serial관리</h3></div>
+            <div class="ui-block-d" style="width:25%">
+                <select id="selectSerialFlag" name="selectSerialFlag"> </select>
+            </div>
+        </section>
+
+        <!-- Serial Display 필드 -->
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>품목코드</h3></div>
+            <h3><div class="ui-block-b" style="width:80%" id="dispItemCode"> </div></h3>
+        </section>
+
+    </div>
+
+    <div data-role="navbar">
+        <span class='msg'></span><div id="msgItemMaster"></div>
+        <ul>
+            <li><a id="btnItemMasterHome"  href=""  data-icon="home">Home</a></li>
+            <li><a id="btnItemMasterClear" href=""  data-icon="refresh">Clear</a></li>
+            <li><a id="btnItemMasterSave"  href=""  data-icon="check">Save</a></li>
+        </ul>
+    </div>
+
+    <div data-role="footer" data-position="fixed">
+        <h4><small>2016 CKS Dream Maker</small></h4>
+    </div> <!-- /footer -->
+
+</div><!-- /page -->
+
+</body>
+</html>

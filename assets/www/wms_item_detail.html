@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+    /*********************************************************
+    /*  Project Name ;  CKS Dream WMS 1.0
+    /*  Description : CKS 창고/매장 재고관리
+    /*  Program History
+    /*  2016-03-17    ksoocho    Creation
+    /*********************************************************
+    -->
+    <meta charset="utf-8" />
+    <title>CKS Dream WMS</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+
+    <link rel="stylesheet" type="text/css" href="./js/jquery.mobile-1.4.5.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+
+    <script type="text/javascript" src="./js/jquery-2.2.1.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.mobile-1.4.5.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.session.js"></script>
+    <script type="text/javascript" src="./js/wms_item_detail.js"></script>
+
+</head>
+<body>
+
+<script type="text/javascript">
+
+ $(document).bind("mobileinit", function() {
+	 $.mobile.autoInitializePage = false;
+     $.mobile.defaultPageTransition = 'flip';
+     $.mobile.loadingMessage = 'Loading...';
+     $.mobile.page.prototype.options.addBackBtn = true;
+ });
+
+// 대분류
+$(document).on('pageinit','#pageWMSItemDetail', function() {
+
+     var v_sel_item_group = $("#selectItemGroup1");
+     var v_msg_item_group = $("#msgItemDetail");
+    setItemGroupList(v_sel_item_group, 'L', ' ',v_msg_item_group);
+});
+
+$(document).ready(function() {
+
+    // Item Image Upload
+    // listen for changes to the HTML input element
+    if (window.File && window.FileReader && window.FormData) {
+
+        var $inputField = $('#fileItemDetail');
+
+        $inputField.on('change', function (e) {
+            var file = e.target.files[0];
+
+            if (file) {
+                if (/^image\//i.test(file.type)) {
+                    readFile(file);
+                } else {
+                    alert('Not a valid image!');
+                }
+            }
+        });
+    } else {
+        alert("File upload is not supported!");
+    }
+
+    //------------------------------------------------------------
+    //  Item Group 대분류 Confirm
+	//------------------------------------------------------------
+	$("#btnItemGroup1").click(function(){
+
+        var v_group_code = $("#selectItemGroup1 option:selected").val();
+
+        if (v_group_code != null && v_group_code != 'choose-one')
+        {
+            var v_sel_item_group = $("#selectItemGroup2");
+            var v_msg_item_group = $("#msgItemDetail");
+            setItemGroupList(v_sel_item_group, 'M', v_group_code, v_msg_item_group);
+        } else  {
+            $("#msgItemDetail").html("<span style='color:#cc0000'>Error: 대분류 확인</span>");
+        }
+    });
+
+    //------------------------------------------------------------
+    //  Item Group 중분류 Confirm
+	//------------------------------------------------------------
+	$("#btnItemGroup2").click(function(){
+
+        var v_group_code = $("#selectItemGroup2 option:selected").val();
+
+        if (v_group_code != null && v_group_code != 'choose-one')
+        {
+            var v_sel_item_group = $("#selectItemGroup3");
+            var v_msg_item_group = $("#msgItemDetail");
+            setItemGroupList(v_sel_item_group, 'S', v_group_code, v_msg_item_group);
+        } else  {
+            $("#msgItemDetail").html("<span style='color:#cc0000'>Error: 중분류 확인</span>");
+        }
+    });
+
+    //------------------------------------------------------------
+    //  Item Group 소분류 Confirm
+	//------------------------------------------------------------
+	$("#btnItemGroup3").click(function(){
+
+        var v_item_group1 = $("#selectItemGroup1 option:selected").val() ;
+        var v_item_group2 = $("#selectItemGroup2 option:selected").val() ;
+        var v_item_group3 = $("#selectItemGroup3 option:selected").val() ;
+
+        if ((v_item_group1 != null && v_item_group1 != 'choose-one')
+             && (v_item_group2 != null && v_item_group2 != 'choose-one')
+             && (v_item_group3 != null && v_item_group3 != 'choose-one'))
+        {
+
+		   var selectItem = $("#selectItemID");
+		   var msgItem = $("#msgItemDetail");
+
+            setItemIDList(selectItem, v_item_group1, v_item_group2, v_item_group3, msgItem);
+        } else {
+            $("#msgItemDetail").html("<span style='color:#cc0000'>Error: 소분류 확인</span>");
+        }
+    });
+
+    //------------------------------------------------------------
+    //  Item Group 소분류 Confirm
+	//------------------------------------------------------------
+	$("#btnItemID").click(function(){
+
+       var v_item_id = $("#selectItemID option:selected").val() ;
+
+        if (v_item_id != null && v_item_id != 'choose-one')
+        {
+            $("#item_id").val(v_item_id);
+        } else {
+            $("#msgItemDetail").html("<span style='color:#cc0000'>Error: 품목 확인</span>");
+        }
+
+    });
+
+    //------------------------------------------------------------
+    //  Script End
+	//------------------------------------------------------------
+
+ });
+
+</script>
+
+<!-- ************************************** -->
+<!--Word Main Page                          -->
+<!-- ************************************** -->
+<div data-role="page" id="pageWMSItemDetail">
+
+    <div data-role="header" >
+        <h1>CKS Dream WMS </h1>
+    </div><!-- /header -->
+
+    <div role="main" class="ui-content">
+
+        <h2>품목 상세정보 등록</h2>
+
+        <!-- Item Group 대분류 목록 보여주기 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>대분류</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectItemGroup1" name="selectItemGroup1"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnItemGroup1" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item Group 중분류 목록 보여주기 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>중분류</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectItemGroup2" name="selectItemGroup2"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnItemGroup2" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item Group 소분류 목록 보여주기 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>소분류</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectItemGroup3" name="selectItemGroup3"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnItemGroup3" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item 목록 보여주기 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>품목</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectItemID" name="selectItemID"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnItemID" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item Master Spec 입력필드 -->
+
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:20%">	<h3>이미지</h3> </div>
+            <div class="ui-block-b" style="width:80%">	<input id="fileItemDetail" type="file" accept="image/*"> </div>
+        </section>
+
+        <form id="itemDetailForm">
+            <input type="hidden" name="item_id" id="item_id" value=""  />
+            <input type="hidden" name="plan_doc_no" id="plan_doc_no" value=""  />
+        </form>
+
+    </div>
+
+    <div data-role="navbar">
+        <span class='msg'></span><div id="msgItemDetail"></div>
+        <ul>
+            <li><a id="btnItemDetailHome"  href=""  data-icon="home">Home</a></li>
+            <li><a id="btnItemDetailClear" href=""  data-icon="refresh">Clear</a></li>
+            <li><a id="btnItemDetailSave" href=""  data-icon="check">Save</a></li>
+        </ul>
+    </div>
+
+    <div data-role="footer" data-position="fixed">
+        <h4><small>2016 CKS Dream Maker</small></h4>
+    </div> <!-- /footer -->
+
+</div><!-- /page -->
+
+</body>
+</html>

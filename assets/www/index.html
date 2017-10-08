@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+    /*********************************************************
+    /*  Project Name ;  CKS Dream WMS 1.0
+    /*  Description : CKS 창고/매장 재고관리
+    /*  Program History
+    /*  2016-03-15    ksoocho    Creation
+    /*********************************************************
+    -->
+    <meta charset="utf-8" />
+    <title>CKS Dream WMS</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+
+    <link rel="stylesheet" type="text/css" href="./js/jquery.mobile-1.4.5.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+
+    <script type="text/javascript" src="./js/jquery-2.2.1.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.mobile-1.4.5.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.session.js"></script>
+    <script type="text/javascript" src="./js/jqm.page.params.js"></script>
+    <script type="text/javascript" src="./js/wms_user_login.js"></script>
+
+</head>
+<body>
+
+<script type="text/javascript">
+
+ $(document).bind("mobileinit", function() {
+	 $.mobile.autoInitializePage = false;
+     $.mobile.defaultPageTransition = 'flip';
+     $.mobile.loadingMessage = 'Loading...';
+     $.mobile.page.prototype.options.addBackBtn = true;
+ });
+
+ $(document).bind('pagebeforechange', function(event, data) {
+     $.mobile.pageData = ( data && data.options && data.options.pageData)
+                           ? data.options.pageData : null;
+ });
+
+<!---------------------------->
+<!-- pageinit : pageWMSHome -->
+<!---------------------------->
+$(document).on('pageinit','#pageWMSHome', function() {
+
+     $('#btnMenu').addClass('ui-disabled');
+
+    var v_user_id = $.session.get('user_id');
+    setRespList(v_user_id);
+});
+
+<!-------------------------->
+<!-- document ready       -->
+<!-------------------------->
+$(document).ready(function() {
+
+    var g_user_id = localStorage.getItem('user_id');
+    var g_user_code = localStorage.getItem('user_code');
+
+   if (g_user_code != null )
+   {
+        $.session.set('user_id' , g_user_id );
+        $.session.set('user_code' , g_user_code );
+
+        window.location.hash = 'pageWMSHome';
+        $.mobile.initializePage();
+
+   } else if (g_user_code != null )
+   {
+        $.session.set('user_id' , g_user_id );
+        $.session.set('user_code' , g_user_code );
+
+        window.location.hash = 'pageWMSHome';
+        $.mobile.initializePage();
+
+
+   } else {
+        window.location.hash = 'pageWMSLogin';
+        $.mobile.initializePage();
+   }
+
+    //------------------------------------------------------------
+    //  System Login
+	//------------------------------------------------------------
+	$("#btnLogin").click(function(){
+
+		var v_user_code = $("#b_usercode").val();
+		var v_user_pwd = $("#b_password").val();
+
+        if(validateLogin(v_user_code, v_user_pwd)){
+		    check_login( v_user_code, v_user_pwd );
+	    }
+
+    });
+
+    //------------------------------------------------------------
+    //  Responsibility Confirm
+	//------------------------------------------------------------
+	$("#btnStageResp").click(function(){
+
+        var v_resp_id = $("#selectStageResp option:selected").val() ;
+
+        if (v_resp_id != null && v_resp_id != 'choose-one')
+        {
+           // Set Organization ID / Subinv Type
+           getRespInfo(v_resp_id);
+
+           // Menu Display
+           var v_subinv_type = $.session.get('subinv_type');
+
+           if ( v_subinv_type == 'SYS' )
+           {
+             // System Admin Menu List - prop('disabled', false)
+             $('#btnMenu').removeClass('ui-disabled');
+
+           } else {
+
+            $('#btnMenu').addClass('ui-disabled');
+
+             // Set Subinv List
+              setSubinvList(v_resp_id);
+           }
+
+           $.session.set('resp_id' , v_resp_id );
+
+        } else  {
+            $("#msgStageError").html("<span style='color:#cc0000'>Error:</span> 권한 확인");
+        }
+    });
+
+    //------------------------------------------------------------
+    //  Subinventory Confirm
+	//------------------------------------------------------------
+	$("#btnStageSubinv").click(function(){
+
+        var v_subinv_code = $("#selectStageSubinv option:selected").val() ;
+
+        if (v_subinv_code != null && v_subinv_code != 'choose-one')
+        {
+             $.session.set('subinv_code' , v_subinv_code );
+
+             // Menu Display
+             $('#btnMenu').removeClass('ui-disabled');
+
+        } else  {
+
+            $('#btnMenu').addClass('ui-disabled');
+
+            $("#msgStageError").html("<span style='color:#cc0000'>Error:</span> 창고 확인");
+        }
+
+    });
+
+ });
+
+</script>
+
+
+<!-- ************************************** -->
+<!-- Word Login Page                        -->
+<!-- ************************************** -->
+
+<div data-role="page" id="pageWMSLogin">
+
+    <div data-role="header" >
+        <h1>CKS Dream WMS</h1>
+    </div><!-- /header -->
+
+    <div role="main" class="ui-content">
+
+        <h2>CKS WMS Login</h2>
+
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:40%">	<label for="b_usercode" style="margin-top: 10px;"><strong>User ID</strong></label> </div>
+            <div class="ui-block-b" style="width:60%">	<input type="text" name="b_usercode" id="b_usercode" value=""  /> </div>
+            <div class="ui-block-a" style="width:40%"> <label for="b_password" style="margin-top: 10px;"><strong>Password</strong></label> </div>
+            <div class="ui-block-b" style="width:60%">	<input type="password" name="b_password" id="b_password" value=""  /> </div>
+        </section>
+
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:30%"></div>
+            <div class="ui-block-b" style="width:40%"> <input type="submit" name="btnLogin" id="btnLogin" value="Login" /></div>
+        </section>
+
+        <span class='msg'></span><div id="errorLogin"></div>
+
+    </div><!-- /content -->
+
+    <div data-role="footer">
+        <h4><small>2016 CKS Dream Maker</small></h4>
+    </div> <!-- /footer -->
+
+</div><!-- /page -->
+
+<!-- ************************************** -->
+<!--Word Main Page                          -->
+<!-- ************************************** -->
+<div data-role="page" id="pageWMSHome">
+
+    <div data-role="header" >
+        <h1>CKS Dream WMS </h1>
+    </div><!-- /header -->
+
+    <div role="main" class="ui-content">
+
+        <!-- 상호명 / 상호 로고 보여주기 -->
+
+
+        <!-- 권한 / 창고 목록 보여주기 -->
+        <h2>권한 / 창고 선택</h2>
+
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>권한</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectStageResp" name="selectStageResp"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnStageResp" class="ui-btn" >확인</a></div>
+        </section>
+
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>창고</h3></div>
+            <div class="ui-block-b" style="width:60%">
+                <select id="selectStageSubinv" name="selectStageSubinv"> </select>
+            </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnStageSubinv" class="ui-btn" >확인</a></div>
+        </section>
+
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:30%"></div>
+            <div class="ui-block-b" style="width:40%"> <a href="wms_menu.html"  data-ajax="false" id="btnMenu" class="ui-btn" >Go to Menu</a></div>
+        </section>
+
+    </div>
+
+    <div data-role="footer" data-position="fixed">
+        <span class='msg'></span><div id="msgStageError"></div>
+        <h4><small>2016 CKS Dream Maker</small></h4>
+    </div> <!-- /footer -->
+
+</div><!-- /page -->
+
+<!-- ************************************** -->
+<!--Word Main Page                          -->
+<!-- ************************************** -->
+<div data-role="page" id="pageWMSMenu">
+
+    <div data-role="header" >
+        <h1>CKS Dream WMS </h1>
+    </div><!-- /header -->
+
+    <div role="main" class="ui-content">
+
+        <!-- 상호명 / 상호 로고 보여주기 -->
+
+        <!-- 권한 / 창고 보여주기 -->
+
+        <!-- 메뉴 목록 보여주기 -->
+        <h2>메뉴 선택</h2>
+        <ul id="menu_list" data-role="listview">
+        </ul>
+
+    </div>
+
+    <div data-role="footer" data-position="fixed">
+        <span class='msg'></span><div id="msgMenuError"></div>
+        <h4><small>2016 CKS Dream Maker</small></h4>
+    </div> <!-- /footer -->
+
+</div><!-- /page -->
+
+</body>
+</html>

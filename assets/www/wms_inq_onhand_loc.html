@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+    /*********************************************************
+    /*  Project Name ;  CKS Dream WMS 1.0
+    /*  Program Name ;  wms_inq_onhand_loc.html
+    /*  Description : 재고조회( Locator )
+    /*  Program History
+    /*  2016-04-02    ksoocho    Creation
+    /*********************************************************
+    -->
+    <meta charset="utf-8" />
+    <title>CKS Dream WMS</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+
+    <link rel="stylesheet" type="text/css" href="./js/jquery.mobile-1.4.5.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+    <link rel="stylesheet" type="text/css" href="css/wms_common.css">
+
+    <script type="text/javascript" src="./js/jquery-2.2.1.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.mobile-1.4.5.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.session.js"></script>
+    <script type="text/javascript" src="./js/jqm.page.params.js"></script>
+    <script type="text/javascript" src="./js/wms_common.js"></script>
+    <script type="text/javascript" src="./js/wms_inq_onhand.js"></script>
+
+</head>
+<body>
+
+<script type="text/javascript">
+
+ $(document).bind("mobileinit", function() {
+	 $.mobile.autoInitializePage = false;
+     $.mobile.defaultPageTransition = 'flip';
+     $.mobile.loadingMessage = 'Loading...';
+     $.mobile.page.prototype.options.addBackBtn = true;
+ });
+
+ $(document).bind('pagebeforechange', function(event, data) {
+     $.mobile.pageData = ( data && data.options && data.options.pageData)
+                           ? data.options.pageData : null;
+ });
+
+$(document).on('pageinit','#pageInqOnhandLoc', function() {
+
+    // Subinventory Display
+    var v_org_id      = $.session.get('org_id');
+    var v_subinv_code = $.session.get('subinv_code');
+    var v_disp_object = $("#dispSubinvName");
+
+    dispSubinvName(v_disp_object, v_org_id, v_subinv_code);
+
+    // Locator Display
+    var v_sel_object = $("#selectLoc");
+    var v_msg_object = $("#msgTxnReceipt");
+
+   setLocatorList(v_sel_object, v_org_id, v_subinv_code, v_msg_object)
+
+});
+
+
+$(document).ready(function() {
+
+    var v_org_id      = $.session.get('org_id');
+    var v_subinv_code    = $.session.get('subinv_code');
+
+    var v_msg_object = $("#msgTxnReceipt");
+
+    //------------------------------------------------------------
+    //  Locator Confirm
+	//------------------------------------------------------------
+	$("#btnLoc").click(function(){
+
+        var v_locator_code   = $("#selectLoc option:selected").val() ;
+
+        if (v_locator_code != null && v_locator_code != 'choose-one')
+        {
+            dispLocOnhandList( v_subinv_code, v_locator_code);
+        } else  {
+            v_msg_object.html("<span style='color:#cc0000'>Error: 위치 확인</span>");
+        }
+    });
+
+
+});
+
+</script>
+
+<!-- ************************************** -->
+<!--Word Main Page                          -->
+<!-- ************************************** -->
+<div data-role="page" id="pageInqOnhandLoc">
+
+    <div data-role="header" data-position="fixed">
+        <h1>CKS Dream WMS </h1>
+    </div><!-- /header -->
+
+    <div role="main" class="ui-content">
+
+        <h2>Onhand Inquiry (Locator)</h2>
+
+        <!-- Subinventory Display 필드 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>창고</h3></div>
+            <h3><div  class="ui-block-b" style="width:80%" id="dispSubinvName"> </div></h3>
+        </section>
+
+        <!-- Locator 목록 보여주기 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:20%"><h3>위치</h3></div>
+            <div class="ui-block-b" style="width:50%">
+                <select id="selectLoc" name="selectLoc"> </select>
+            </div>
+            <div class="ui-block-c" style="width:30%"><input id="btnLoc" data-role="button" data-icon="refresh" data-theme="c" data-inline="true" value="조회" type="button"></div>
+        </section>
+
+        <!-- 재고 LIST 보여주기 -->
+        <table data-role="table" id="tblLocOnhand" class="ui-responsive table-stroke">
+            <thead>
+            <tr>
+                <th>품목</th>
+                <th>품명/규격</th>
+                <th>품목그룹</th>
+                <th>LPN</th>
+                <th>재고수량</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+
+    </div>
+
+    <div data-role="footer" data-position="fixed">
+        <span class='msg'></span><div id="msgInqOnhand"></div>
+        <h4><small>2016 CKS Dream Maker</small></h4>
+    </div> <!-- /footer -->
+
+</div><!-- /page -->
+
+</body>
+</html>

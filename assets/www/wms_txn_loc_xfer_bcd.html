@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+    /*********************************************************
+    /*  Project Name ;  CKS Dream WMS 1.0
+    /*  Program Name ;  wms_txn_loc_xfer_bcd.html
+    /*  Description : Barcode 재고이동
+    /*  Program History
+    /*  2016-03-28    ksoocho    Creation
+    /*********************************************************
+    -->
+    <meta charset="utf-8" />
+    <title>CKS Dream WMS</title>
+    <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+
+    <link rel="stylesheet" type="text/css" href="./js/jquery.mobile-1.4.5.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/index.css">
+
+    <script type="text/javascript" src="./js/jquery-2.2.1.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.mobile-1.4.5.min.js"></script>
+    <script type="text/javascript" src="./js/jquery.session.js"></script>
+    <script type="text/javascript" src="./js/wms_common.js"></script>
+    <script type="text/javascript" src="./js/wms_validation.js"></script>
+    <script type="text/javascript" src="./js/wms_item_common.js"></script>
+    <script type="text/javascript" src="./js/wms_txn_loc_xfer.js"></script>
+
+</head>
+<body>
+
+<script type="text/javascript">
+
+ $(document).bind("mobileinit", function() {
+	 $.mobile.autoInitializePage = false;
+     $.mobile.defaultPageTransition = 'flip';
+     $.mobile.loadingMessage = 'Loading...';
+     $.mobile.page.prototype.options.addBackBtn = true;
+ });
+
+$(document).on('pageinit','#pageTxnLocXferBCD', function() {
+
+    // Subinventory Display
+    var v_org_id      = $.session.get('org_id');
+    var v_subinv_code = $.session.get('subinv_code');
+    var v_disp_object = $("#dispSubinvName");
+
+    dispSubinvName(v_disp_object, v_org_id, v_subinv_code);
+
+    // Input Column
+    $( "#itemQty" ).textinput( "disable" );
+    $( "#itemSerial" ).textinput( "disable" );
+
+});
+
+$(document).ready(function() {
+
+    var v_org_id      = $.session.get('org_id');
+    var v_subinv_code = $.session.get('subinv_code');
+
+    var v_msg_object = $("#msgTxnLocXfer");
+
+    //------------------------------------------------------------
+    //  From Locator Confirm
+	//------------------------------------------------------------
+	$("#btnFromLoc").click(function(){
+
+        v_msg_object.html("<span style='color:#cc0000'> </span>");
+
+        // Validation Check
+        var v_from_loc_code =  $( '#fromLocCode' ).val();
+
+        if ( v_from_loc_code != null && v_from_loc_code !='' )
+        {
+             var v_return_flag = checkLocCode( v_org_id, v_subinv_code, v_from_loc_code );  //wms_validation
+
+            if ( v_return_flag != 'Y' ) {
+                v_msg_object.html("<span style='color:#cc0000'>Error: Invalid From Locator</span>");
+            } else {
+                v_msg_object.html("<span style='color:#0000cc'>From Locator - OK</span>");
+            }
+        } else {
+            v_msg_object.html("<span style='color:#cc0000'>Error: Invalid From Locator! </span>");
+        }
+    });
+
+    //------------------------------------------------------------
+    // To Locator Confirm
+	//------------------------------------------------------------
+	$("#btnToLoc").click(function(){
+
+        v_msg_object.html("<span style='color:#cc0000'> </span>");
+
+        // Validation Check
+        var v_to_loc_code =  $( '#toLocCode' ).val();
+
+        if ( v_to_loc_code != null && v_to_loc_code != '' )
+        {
+             var v_return_flag = checkLocCode( v_org_id, v_subinv_code, v_to_loc_code );  //wms_validation
+
+            if ( v_return_flag != 'Y' ) {
+                v_msg_object.html("<span style='color:#cc0000'>Error: Invalid To Locator</span>");
+            } else {
+                v_msg_object.html("<span style='color:#0000cc'>To Locator - OK</span>");
+            }
+        } else {
+            v_msg_object.html("<span style='color:#cc0000'>Error: Invalid To Locator! </span>");
+        }
+    });
+
+    //------------------------------------------------------------
+    //  Item Code Confirm
+	//------------------------------------------------------------
+	$("#btnItem").click(function(){
+
+        v_msg_object.html("<span style='color:#cc0000'> </span>");
+
+	    var v_item_code = $( '#itemCode' ).val();
+
+	    // Validation Check
+	    if ( v_item_code != null && v_item_code != '' )
+        {
+            var v_return_flag = checkItemCode( v_org_id, v_item_code );
+
+            if ( v_return_flag != 'Y' ) {
+                  v_msg_object.html("<span style='color:#cc0000'>Error: Invalid Item</span>");
+            } else {
+
+                // Serial Check
+                var v_val_serial_object = $("#valSerialCode");
+
+                getItemSerialCode(v_val_serial_object, v_org_id, v_item_code);
+
+                v_serial_code = v_val_serial_object.val();
+
+                if ( v_serial_code == '5' || v_serial_code == 5 )
+                {
+                    $( '#itemQty' ).val(1);
+                    $( "#itemQty" ).textinput( "disable" );
+                    $( "#itemSerial" ).textinput( "enable" );
+                } else {
+                    $( '#itemQty').val(0);
+                    $( "#itemQty" ).textinput( "enable" );
+                    $( "#itemSerial" ).textinput( "disable" );
+                }
+
+                // 품명규격
+                var v_val_item_object = $("#dispItemDescr");
+                getItemDescr(v_val_item_object, v_org_id, v_item_code);
+
+                v_msg_object.html("<span style='color:#0000cc'>Item - OK</span>");
+            }
+        } else {
+            v_msg_object.html("<span style='color:#cc0000'>Error: Invalid Item</span>");
+        }
+    });
+
+    //------------------------------------------------------------
+    //  Serial No Confirm
+	//------------------------------------------------------------
+	$("#btnSerial").click(function(){
+
+       v_msg_object.html("<span style='color:#cc0000'> </span>");
+
+        // Validation Check
+        var v_loc_code   = $("#locCode").val();
+        var v_item_code  = $("#itemCode").val();
+        var v_serial_no  =  $('#itemSerial').val();
+
+        if ( v_serial_no != null && v_serial_no != '' )
+        {
+             var v_return_flag = checkSerialNo( v_org_id, v_subinv_code, v_loc_code, v_item_code, v_serial_no );  //wms_validation
+
+            if ( v_return_flag != 'Y' ) {
+                v_msg_object.html("<span style='color:#cc0000'>Error: Invalid Serial</span>");
+            } else {
+                v_msg_object.html("<span style='color:#0000cc'>Serial - OK</span>");
+            }
+        } else {
+            v_msg_object.html("<span style='color:#cc0000'>Error: InvalidSerial! </span>");
+        }
+
+    });
+
+    //------------------------------------------------------------
+    //  Save Button
+	//------------------------------------------------------------
+	$("#btnTxnLocXferSave").click(function(){
+
+        v_msg_object.html("<span style='color:#cc0000'> </span>");
+
+        var v_check_code     = 'N';
+        var v_return_flag    = 'N';
+
+        var v_from_loc_code  = $("#fromLocCode").val();
+        var v_to_loc_code    = $("#toLocCode").val();
+        var v_item_code      = $("#itemCode").val();
+        var v_txn_qty        = $("#itemQty").val();
+        var v_serial_no      = $("#itemSerial").val();
+        var v_serial_code    = $("#valSerialCode").val();
+        var v_txn_reference  = 'wms_txn_sub_xfer_bcd' ;
+
+        var answer = confirm('재고이동처리 하시겠습니까?');
+
+        if (answer)  {
+            v_check_code = 'Y';
+        } else  {
+            v_check_code = 'N';
+        }
+
+        // 입고 Validation
+        if ( v_check_code == 'Y')
+        {
+            v_return_flag = validateTxnSubXfer( v_msg_object
+                                              , v_subinv_code
+                                              , v_from_loc_code
+                                              , v_to_loc_code
+                                              , v_item_code
+                                              , v_txn_qty
+                                              , v_serial_no
+                                              , v_serial_code
+                                               );
+        } else {
+            v_return_flag = 'N';
+        }
+
+        // 입고처리
+        if ( v_return_flag == 'Y' )
+        {
+            saveTxnLocXfer( v_msg_object,
+                            v_subinv_code,
+                            v_from_loc_code,
+                            v_to_loc_code,
+                            v_item_code,
+                            v_txn_qty,
+                            v_serial_no,
+                            v_txn_reference );
+        }
+
+    });
+
+    //------------------------------------------------------------
+    //  Clear Button
+	//------------------------------------------------------------
+	$("#btnTxnLocXferClear").click(function(){
+
+        $("#fromLocCode").val("");
+        $("#toLocCode").val("");
+        $("#itemCode").val("");
+        $("#itemQty").val("");
+        $("#itemSerial").val("");
+        $("#valSerialCode").val("");
+    });
+
+});
+
+
+</script>
+
+<!-- ************************************** -->
+<!--Word Main Page                          -->
+<!-- ************************************** -->
+<div data-role="page" id="pageTxnLocXferBCD">
+
+    <div data-role="header" >
+        <h1>CKS Dream WMS </h1>
+    </div><!-- /header -->
+
+    <div role="main" class="ui-content">
+
+        <h2>Locator Transfer(BCD)</h2>
+
+        <!-- Subinventory Display 필드 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:30%"><h3>창고</h3></div>
+            <h3><div  class="ui-block-b" style="width:70%" id="dispSubinvName"> </div></h3>
+        </section>
+
+        <!-- From Locator 입력필드 -->
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:30%">	<h3>From위치</h3> </div>
+            <div class="ui-block-b" style="width:50%">	<input type="text" name="fromLocCode" id="fromLocCode" value=""  /> </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnFromLoc" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item Code 입력필드 -->
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:30%">	<h3>품목</h3> </div>
+            <div class="ui-block-b" style="width:50%">	<input type="text" name="itemCode" id="itemCode" value=""  /> </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnItem" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- Item 품명 Display 필드 -->
+        <section class="ui-grid-b ui-mini">
+            <div class="ui-block-a" style="width:30%"><h3>품명규격</h3></div>
+            <h3><div  class="ui-block-b" style="width:70%" id="dispItemDescr"> </div></h3>
+        </section>
+
+        <!-- Item Qty 입력필드 -->
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:30%">	<h3>수량</h3> </div>
+            <div class="ui-block-b" style="width:70%">	<input type="text" name="itemQty" id="itemQty" value=""  /> </div>
+        </section>
+
+        <!-- Item Serial 입력필드 -->
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:30%">	<h3>Serial</h3> </div>
+            <div class="ui-block-b" style="width:50%">	<input type="text" name="itemSerial" id="itemSerial" value=""  /> </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnSerial" class="ui-btn" >확인</a></div>
+        </section>
+
+        <!-- To Locator 입력필드 -->
+        <section class="ui-grid-a ui-mini">
+            <div class="ui-block-a" style="width:30%">	<h3>To위치</h3> </div>
+            <div class="ui-block-b" style="width:50%">	<input type="text" name="toLocCode" id="toLocCode" value=""  /> </div>
+            <div class="ui-block-c" style="width:20%"><a href="#" id="btnToLoc" class="ui-btn" >확인</a></div>
+        </section>
+
+    </div>
+
+    <!-- Hidden Column -->
+    <input type="hidden" id="valSerialCode"   name="valSerialCode"   value="" />
+
+
+    <!-- Footer -->
+    <div data-role="footer" data-position="fixed">
+        <span class='msg'></span><div id="msgTxnLocXfer"></div>
+        <div data-role="navbar">
+            <ul>
+                <li><a id="btnTxnLocXferHome"  href=""  data-icon="home" data-rel="back">Home</a></li>
+                <li><a id="btnTxnLocXferClear" href=""  data-icon="refresh">Clear</a></li>
+                <li><a id="btnTxnLocXferSave"  href=""  data-icon="check">Save</a></li>
+            </ul>
+        </div>
+        <h4><small>2016 CKS Dream Maker</small></h4>
+    </div> <!-- /footer -->
+
+</div><!-- /page -->
+
+</body>
+</html>
